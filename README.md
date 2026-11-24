@@ -6,6 +6,7 @@ Type a description, get a finished song with beat and vocals. Free and unlimited
 
 - A computer with a graphics card with 6 GB or more of video memory (NVIDIA recommended), or an Apple Silicon Mac (M1 or newer). It can run without one, but very slowly.
 - About 10 GB of free disk space for the model, downloaded automatically the first time.
+- 16 GB of memory or more. On machines with little memory the engine runs without its lyric writer; the studio then asks you to type your own lyrics.
 - [Node.js](https://nodejs.org) 20 or newer.
 
 ## Setup
