@@ -91,6 +91,8 @@ async function runJob(job, input) {
   };
   const bpm = Math.round(Number(input.bpm));
   if (bpm >= 30 && bpm <= 300) body.bpm = bpm;
+  const steps = Math.round(Number(input.steps));
+  if (steps >= 1 && steps <= 20) body.inference_steps = steps; // more steps: slower, more detail
   const key = String(input.key || '').trim().slice(0, 20);
   if (key) body.key_scale = key;
   if (lyrics) Object.assign(body, { prompt, lyrics });
