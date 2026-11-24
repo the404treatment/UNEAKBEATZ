@@ -1,0 +1,8 @@
+{
+  "name": "uneakbeatz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prompt-to-song studio: beats and vocals from a text description",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" }
+}

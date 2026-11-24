@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UNEAKBEATZ Studio</title>
+<style>
+  :root {
+    --bg: #0d0d12; --panel: #17171f; --panel2: #1f1f2a; --line: #2c2c3a;
+    --text: #f1f1f5; --muted: #9a9aae; --accent: #c6ff3d; --accent-ink: #10130a; --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 80px; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  h1 { font-size: 28px; letter-spacing: 0.04em; margin: 0; font-weight: 800; }
+  h1 span { color: var(--accent); }
+  header p { margin: 0; color: var(--muted); }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  textarea, input[type=text], input[type=number] {
+    width: 100%; background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; font: inherit; resize: vertical;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; margin-top: 16px; }
+  .row > div { flex: 1 1 180px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .toggle { display: flex; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+  .toggle button { flex: 1; background: none; color: var(--muted); border: 0; border-radius: 7px; padding: 8px; font: inherit; cursor: pointer; }
+  .toggle button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chips button { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .chips button:hover { color: var(--text); border-color: var(--muted); }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .btn { border: 1px solid var(--line); background: var(--panel2); color: var(--text); border-radius: 10px; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.small { padding: 6px 12px; font-size: 14px; font-weight: 500; }
+  .btn:disabled { opacity: 0.5; cursor: wait; }
+  .hint { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
+  #status { margin-top: 14px; font-size: 15px; min-height: 22px; }
+  #status.error { color: var(--danger); }
+  #status.busy::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-right: 8px; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.2; } }
+  .banner { background: #2a2410; border: 1px solid #5c4d12; color: #ffe08a; border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; font-size: 15px; }
+  code { background: var(--panel2); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+  .chunk { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .chunk textarea, .chunk input { background: var(--bg); }
+  .chunk .row { margin-top: 10px; }
+  .song { border-top: 1px solid var(--line); padding: 16px 0; }
+  .song:first-child { border-top: 0; padding-top: 0; }
+  .song-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .song-title { font-weight: 600; overflow-wrap: anywhere; }
+  .song-meta { color: var(--muted); font-size: 13px; }
+  .song audio { width: 100%; margin: 10px 0; }
+  .song-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .song-actions a { text-decoration: none; }
+  .empty { color: var(--muted); margin: 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>UNEAK<span>BEATZ</span></h1>
+    <p>Describe a song. Get a finished track with beat and vocals.</p>
+  </header>
+
+  <div class="banner" id="keyBanner" hidden>
+    No API key found. Copy <code>.env.example</code> to <code>.env</code>, paste your ElevenLabs key, and restart the server.
+  </div>
+
+  <section>
+    <h2>1. Describe your song</h2>
+    <label for="prompt">Genre, mood, tempo, instruments, voice, what it's about</label>
+    <textarea id="prompt" rows="4" placeholder="Dark melodic trap, 140 BPM, heavy 808s and haunting piano, male vocals with autotune, about coming up from nothing"></textarea>
+    <div class="chips" id="chips"></div>
+    <div class="row">
+      <div>
+        <label for="length">Length: <span id="lengthLabel">1:30</span></label>
+        <input type="range" id="length" min="15" max="300" step="15" value="90">
+      </div>
+      <div>
+        <label>Vocals</label>
+        <div class="toggle" id="vocalToggle">
+          <button type="button" data-v="0" aria-pressed="true">Singing</button>
+          <button type="button" data-v="1" aria-pressed="false">Instrumental</button>
+        </div>
+      </div>
+      <div>
+        <label for="title">Title (optional)</label>
+        <input type="text" id="title" maxlength="80" placeholder="Untitled">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="quickBtn">Generate song</button>
+      <button class="btn" id="planBtn">Write lyrics first</button>
+    </div>
+    <p class="hint">"Write lyrics first" is free and lets you edit the words and structure before spending credits on audio.</p>
+    <div id="status" role="status"></div>
+  </section>
+
+  <section id="planSection" hidden>
+    <h2>2. Edit lyrics and structure</h2>
+    <div id="chunks"></div>
+    <div class="actions">
+      <button class="btn primary" id="renderBtn">Generate from these lyrics</button>
+      <button class="btn" id="discardBtn">Discard</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your songs</h2>
+    <div id="songs"><p class="empty">Nothing yet. Your generated songs will show up here.</p></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const IDEAS = [
+  'Dark melodic trap, 140 BPM, heavy 808s, haunting piano, autotuned male vocals',
+  'Smooth R&B slow jam, 85 BPM, warm Rhodes keys, silky female vocals, late night drive',
+  'Afrobeats summer anthem, 105 BPM, bouncy log drums, catchy sung hook',
+  'Lo-fi boom bap, 80 BPM, dusty drums, jazzy guitar, laid back rap verses',
+  'UK drill, 142 BPM, sliding 808s, eerie strings, aggressive delivery',
+];
+let instrumental = false;
+let plan = null;
+
+function fmt(sec) { return Math.floor(sec / 60) + ':' + String(Math.round(sec % 60)).padStart(2, '0'); }
+function setStatus(msg, kind) { const s = $('status'); s.textContent = msg || ''; s.className = kind || ''; }
+function setBusy(busy) { for (const b of document.querySelectorAll('.btn')) b.disabled = busy; }
+
+async function api(path, opts) {
+  const r = await fetch(path, opts && { method: opts.method || 'POST', headers: { 'Content-Type': 'application/json' }, body: opts.body && JSON.stringify(opts.body) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+  return data;
+}
+
+function el(tag, props, ...kids) {
+  const n = Object.assign(document.createElement(tag), props || {});
+  n.append(...kids);
+  return n;
+}
+
+// --- Compose form ---
+for (const idea of IDEAS) {
+  $('chips').append(el('button', { type: 'button', textContent: idea.split(',')[0], onclick: () => { $('prompt').value = idea; $('prompt').focus(); } }));
+}
+$('length').oninput = () => { $('lengthLabel').textContent = fmt($('length').value); };
+for (const b of $('vocalToggle').children) {
+  b.onclick = () => {
+    instrumental = b.dataset.v === '1';
+    for (const o of $('vocalToggle').children) o.setAttribute('aria-pressed', String(o === b));
+  };
+}
+
+function form() {
+  return { prompt: $('prompt').value.trim(), lengthSec: Number($('length').value), instrumental, title: $('title').value.trim() };
+}
+
+async function run(label, fn) {
+  setBusy(true); setStatus(label, 'busy');
+  try { await fn(); setStatus(''); }
+  catch (e) { setStatus(e.message, 'error'); }
+  finally { setBusy(false); }
+}
+
+async function compose(body) {
+  const { song } = await api('/api/compose', { body });
+  await loadSongs();
+  const first = document.querySelector('.song audio');
+  if (first) first.play().catch(() => {});
+  return song;
+}
+
+$('quickBtn').onclick = () => {
+  const f = form();
+  if (!f.prompt) return setStatus('Describe the song first.', 'error');
+  run('Making your song. This usually takes a minute or two...', () => compose(f));
+};
+
+$('planBtn').onclick = () => {
+  const f = form();
+  if (!f.prompt) return setStatus('Describe the song first.', 'error');
+  run('Writing lyrics and structure...', async () => {
+    plan = (await api('/api/plan', { body: f })).plan;
+    renderPlan();
+    $('planSection').scrollIntoView({ behavior: 'smooth' });
+  });
+};
+
+// --- Plan editor ---
+function renderPlan() {
+  const box = $('chunks');
+  box.replaceChildren();
+  const chunks = (plan && plan.chunks) || [];
+  $('planSection').hidden = !chunks.length;
+  chunks.forEach((c, i) => {
+    if (typeof c.text !== 'string') return; // audio reference chunks are passed through untouched
+    const text = el('textarea', { rows: Math.min(12, c.text.split('\n').length + 1), value: c.text });
+    text.oninput = () => { c.text = text.value; };
+    const styles = el('input', { type: 'text', value: (c.positive_styles || []).join(', ') });
+    styles.oninput = () => { c.positive_styles = styles.value.split(',').map((s) => s.trim()).filter(Boolean); };
+    const dur = el('input', { type: 'number', min: 3, max: 120, value: Math.round(c.duration_ms / 1000) });
+    dur.oninput = () => { c.duration_ms = Math.min(120, Math.max(3, Number(dur.value) || 3)) * 1000; };
+    box.append(el('div', { className: 'chunk' },
+      el('label', { textContent: 'Part ' + (i + 1) + ': section name in [brackets], then lyrics' }), text,
+      el('div', { className: 'row' },
+        el('div', { style: 'flex: 3 1 260px' }, el('label', { textContent: 'Sound and style' }), styles),
+        el('div', { style: 'flex: 1 1 90px' }, el('label', { textContent: 'Seconds' }), dur))));
+  });
+}
+
+$('renderBtn').onclick = () => {
+  const f = form();
+  run('Making your song. This usually takes a minute or two...', async () => {
+    await compose({ ...f, plan });
+  });
+};
+$('discardBtn').onclick = () => { plan = null; renderPlan(); };
+
+// --- Library ---
+async function loadSongs() {
+  const { songs } = await api('/api/songs');
+  const box = $('songs');
+  if (!songs.length) return box.replaceChildren(el('p', { className: 'empty', textContent: 'Nothing yet. Your generated songs will show up here.' }));
+  box.replaceChildren(...songs.map((s) => {
+    const reuse = el('button', { className: 'btn small', textContent: 'Reuse prompt', onclick: () => {
+      $('prompt').value = s.prompt; $('title').value = s.title;
+      if (s.plan) { plan = structuredClone(s.plan); renderPlan(); }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } });
+    const del = el('button', { className: 'btn small', textContent: 'Delete', onclick: async () => {
+      if (!confirm('Delete "' + s.title + '"? This cannot be undone.')) return;
+      await api('/api/songs/' + s.id, { method: 'DELETE' });
+      loadSongs();
+    } });
+    return el('div', { className: 'song' },
+      el('div', { className: 'song-head' },
+        el('div', { className: 'song-title', textContent: s.title }),
+        el('div', { className: 'song-meta', textContent: new Date(s.createdAt).toLocaleString() + (s.instrumental ? ' · instrumental' : '') })),
+      el('audio', { controls: true, preload: 'metadata', src: s.file }),
+      el('div', { className: 'song-actions' },
+        el('a', { className: 'btn small', href: s.file, download: s.title.replace(/[^\w\- ]+/g, '') + '.mp3', textContent: 'Download MP3' }),
+        reuse, del));
+  }));
+}
+
+api('/api/status').then((s) => { $('keyBanner').hidden = s.keyConfigured; }).catch(() => {});
+loadSongs().catch((e) => setStatus(e.message, 'error'));
+</script>
+</body>
+</html>
