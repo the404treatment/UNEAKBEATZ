@@ -1,4 +1,5 @@
 // UNEAKBEATZ studio server. No dependencies: run with `node server.js`.
+// Music is made by ACE-Step 1.5, a free open-source model running on this computer.
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -7,8 +8,6 @@ const crypto = require('node:crypto');
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const SONGS = path.join(ROOT, 'songs');
-const API = 'https://api.elevenlabs.io';
-const MODEL = 'music_v2_5';
 
 // Load .env (KEY=value lines) without a dependency.
 try {
@@ -19,55 +18,109 @@ try {
 } catch {}
 
 const PORT = Number(process.env.PORT) || 3000;
-const KEY = process.env.ELEVENLABS_API_KEY || '';
+const ENGINE = (process.env.ACESTEP_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
+const ENGINE_KEY = process.env.ACESTEP_API_KEY || '';
 fs.mkdirSync(SONGS, { recursive: true });
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
   '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.json': 'application/json',
 };
+const fail = (status, message) => Object.assign(new Error(message), { status });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function send(res, status, body, type = 'application/json') {
-  const data = type === 'application/json' ? JSON.stringify(body) : body;
-  res.writeHead(status, { 'Content-Type': type });
-  res.end(data);
+function send(res, status, body) {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(body));
 }
 
 async function readJson(req) {
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 1e6) throw Object.assign(new Error('Request too large'), { status: 413 });
+    if (raw.length > 1e6) throw fail(413, 'Request too large');
   }
-  return raw ? JSON.parse(raw) : {};
+  try { return raw ? JSON.parse(raw) : {}; } catch { throw fail(400, 'Bad JSON'); }
 }
 
-// Turn an ElevenLabs error body into one readable sentence.
-function describeError(status, text) {
-  let msg = text;
+// --- ACE-Step engine client ---
+async function engine(pathname, body) {
+  let r;
   try {
-    const d = JSON.parse(text).detail;
-    if (Array.isArray(d)) msg = d.map((e) => `${(e.loc || []).slice(1).join('.')}: ${e.msg}`).join('; ');
-    else if (d && typeof d === 'object') msg = d.message || d.status || JSON.stringify(d);
-    else if (d) msg = String(d);
-  } catch {}
-  if (status === 401) msg = `API key rejected. ${msg}`;
-  return Object.assign(new Error(msg.slice(0, 600) || `ElevenLabs returned ${status}`), { status: 502 });
+    r = await fetch(ENGINE + pathname, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json', ...(ENGINE_KEY && { Authorization: `Bearer ${ENGINE_KEY}` }) },
+      body: body && JSON.stringify(body),
+    });
+  } catch {
+    throw fail(503, `The music engine is not running at ${ENGINE}. Start ACE-Step (see README) and try again.`);
+  }
+  const text = await r.text();
+  let json = null;
+  try { json = JSON.parse(text); } catch {}
+  if (!r.ok || (json && json.code && json.code !== 200)) {
+    const d = json && (json.error || json.detail);
+    const msg = typeof d === 'string' ? d : d ? JSON.stringify(d) : text.slice(0, 300);
+    throw fail(502, `Music engine error (${r.status}): ${msg || 'no details'}`);
+  }
+  return json && 'data' in json ? json.data : json;
 }
 
-async function eleven(pathname, body) {
-  const r = await fetch(API + pathname, {
-    method: 'POST',
-    // Without a local key a placeholder is sent, for setups where a proxy injects the real one.
-    headers: { 'xi-api-key': KEY || 'injected-by-proxy', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw describeError(r.status, await r.text());
-  return r;
+async function engineOnline() {
+  try { await engine('/health'); return true; } catch { return false; }
 }
 
-const clampMs = (sec) => Math.round(Math.min(600, Math.max(3, Number(sec) || 60)) * 1000);
-const safeId = (id) => (/^[a-f0-9]{12}$/.test(id) ? id : null);
+// --- Jobs: a song can take minutes, so the browser polls instead of waiting on one request ---
+const jobs = new Map();
+
+async function runJob(job, input) {
+  const instrumental = Boolean(input.instrumental);
+  const lyrics = instrumental ? '[Instrumental]' : String(input.lyrics || '').trim();
+  const prompt = String(input.prompt).trim();
+  const body = {
+    audio_duration: Math.min(600, Math.max(10, Number(input.lengthSec) || 90)),
+    audio_format: 'mp3',
+    batch_size: 1,
+    thinking: true,
+    vocal_language: /^[a-z]{2}$/.test(input.language || '') ? input.language : 'en',
+  };
+  if (lyrics) Object.assign(body, { prompt, lyrics });
+  else Object.assign(body, { sample_query: prompt }); // the engine's language model writes the lyrics
+
+  const { task_id } = await engine('/release_task', body);
+  if (!task_id) throw fail(502, 'Music engine did not accept the song request.');
+
+  for (;;) {
+    await sleep(3000);
+    const [task] = (await engine('/query_result', { task_id_list: [task_id] })) || [];
+    if (!task || task.status === 0) continue;
+    let items = task.result; // arrives as a JSON string
+    try { if (typeof items === 'string') items = JSON.parse(items); } catch { items = []; }
+    const item = (Array.isArray(items) ? items : []).find((i) => i && i.file);
+    if (task.status !== 1 || !item) {
+      const why = (Array.isArray(items) && items[0] && (items[0].error || items[0].generation_info)) || '';
+      throw fail(502, `The music engine could not make this song. ${String(why).slice(0, 300)}`.trim());
+    }
+
+    const audio = await fetch(new URL(item.file, ENGINE), { headers: ENGINE_KEY ? { Authorization: `Bearer ${ENGINE_KEY}` } : {} });
+    if (!audio.ok) throw fail(502, `Could not download the finished song (${audio.status}).`);
+    const id = crypto.randomBytes(6).toString('hex');
+    const song = {
+      id,
+      title: String(input.title || prompt).trim().slice(0, 80) || 'Untitled',
+      prompt,
+      style: String(item.prompt || ''),
+      lyrics: instrumental ? '' : String(item.lyrics || lyrics),
+      instrumental,
+      metas: item.metas || null,
+      createdAt: new Date().toISOString(),
+      file: `/songs/${id}.mp3`,
+    };
+    fs.writeFileSync(path.join(SONGS, `${id}.mp3`), Buffer.from(await audio.arrayBuffer()));
+    fs.writeFileSync(path.join(SONGS, `${id}.json`), JSON.stringify(song, null, 2));
+    return song;
+  }
+}
 
 function listSongs() {
   return fs.readdirSync(SONGS)
@@ -78,45 +131,19 @@ function listSongs() {
 }
 
 const routes = {
-  'GET /api/status': async () => ({ keyConfigured: Boolean(KEY), model: MODEL }),
+  'GET /api/status': async () => ({ engineOnline: await engineOnline(), engineUrl: ENGINE }),
 
-  // Free: turns a prompt into an editable plan (sections, lyrics, styles).
-  'POST /api/plan': async (req) => {
-    const { prompt, lengthSec, instrumental } = await readJson(req);
-    if (!prompt || !String(prompt).trim()) throw Object.assign(new Error('Describe the song first.'), { status: 400 });
-    const full = instrumental ? `${prompt}\n\nInstrumental only, no vocals, no lyrics.` : String(prompt);
-    const r = await eleven('/v1/music/plan', { prompt: full, music_length_ms: clampMs(lengthSec), model_id: MODEL });
-    return { plan: await r.json() };
-  },
-
-  // Costs credits: renders audio from either a prompt or an edited plan.
   'POST /api/compose': async (req) => {
-    const { prompt, plan, lengthSec, instrumental, title } = await readJson(req);
-    const body = { model_id: MODEL };
-    if (plan && Array.isArray(plan.chunks) && plan.chunks.length) {
-      body.composition_plan = plan;
-    } else if (prompt && String(prompt).trim()) {
-      body.prompt = String(prompt);
-      body.music_length_ms = clampMs(lengthSec);
-      if (instrumental) body.force_instrumental = true;
-    } else {
-      throw Object.assign(new Error('Describe the song first.'), { status: 400 });
-    }
-    const r = await eleven('/v1/music?output_format=mp3_48000_192', body);
-    const audio = Buffer.from(await r.arrayBuffer());
-    const id = crypto.randomBytes(6).toString('hex');
-    const song = {
-      id,
-      title: String(title || prompt || 'Untitled').trim().slice(0, 80) || 'Untitled',
-      prompt: String(prompt || ''),
-      plan: body.composition_plan || null,
-      instrumental: Boolean(instrumental),
-      createdAt: new Date().toISOString(),
-      file: `/songs/${id}.mp3`,
-    };
-    fs.writeFileSync(path.join(SONGS, `${id}.mp3`), audio);
-    fs.writeFileSync(path.join(SONGS, `${id}.json`), JSON.stringify(song, null, 2));
-    return { song };
+    const input = await readJson(req);
+    if (!input.prompt || !String(input.prompt).trim()) throw fail(400, 'Describe the song first.');
+    if (!(await engineOnline())) throw fail(503, `The music engine is not running at ${ENGINE}. Start ACE-Step (see README) and try again.`);
+    const job = { id: crypto.randomBytes(6).toString('hex'), status: 'working', startedAt: Date.now() };
+    jobs.set(job.id, job);
+    runJob(job, input)
+      .then((song) => Object.assign(job, { status: 'done', song }))
+      .catch((err) => { if (!err.status) console.error(err); Object.assign(job, { status: 'failed', error: err.message }); })
+      .finally(() => setTimeout(() => jobs.delete(job.id), 3600e3).unref());
+    return { jobId: job.id };
   },
 
   'GET /api/songs': async () => ({ songs: listSongs() }),
@@ -128,11 +155,15 @@ const server = http.createServer(async (req, res) => {
     const route = routes[`${req.method} ${url.pathname}`];
     if (route) return send(res, 200, await route(req));
 
-    const del = req.method === 'DELETE' && url.pathname.match(/^\/api\/songs\/([^/]+)$/);
+    const jobMatch = req.method === 'GET' && url.pathname.match(/^\/api\/jobs\/([a-f0-9]{12})$/);
+    if (jobMatch) {
+      const job = jobs.get(jobMatch[1]);
+      return job ? send(res, 200, job) : send(res, 404, { error: 'That song request was lost (the server restarted). Try again.' });
+    }
+
+    const del = req.method === 'DELETE' && url.pathname.match(/^\/api\/songs\/([a-f0-9]{12})$/);
     if (del) {
-      const id = safeId(del[1]);
-      if (!id) return send(res, 400, { error: 'Bad song id' });
-      for (const ext of ['.mp3', '.json']) fs.rmSync(path.join(SONGS, id + ext), { force: true });
+      for (const ext of ['.mp3', '.json']) fs.rmSync(path.join(SONGS, del[1] + ext), { force: true });
       return send(res, 200, { ok: true });
     }
 
@@ -164,7 +195,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`UNEAKBEATZ studio running at http://localhost:${PORT}`);
-  if (!KEY) console.log('No ELEVENLABS_API_KEY set. Copy .env.example to .env and add your key.');
+  if (!(await engineOnline())) console.log(`Music engine not reachable at ${ENGINE}. Start ACE-Step (see README).`);
 });

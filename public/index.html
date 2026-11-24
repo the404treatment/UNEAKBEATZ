@@ -45,9 +45,6 @@
   @keyframes pulse { 50% { opacity: 0.2; } }
   .banner { background: #2a2410; border: 1px solid #5c4d12; color: #ffe08a; border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; font-size: 15px; }
   code { background: var(--panel2); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
-  .chunk { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-  .chunk textarea, .chunk input { background: var(--bg); }
-  .chunk .row { margin-top: 10px; }
   .song { border-top: 1px solid var(--line); padding: 16px 0; }
   .song:first-child { border-top: 0; padding-top: 0; }
   .song-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
@@ -57,6 +54,9 @@
   .song-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .song-actions a { text-decoration: none; }
   .empty { color: var(--muted); margin: 0; }
+  details { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+  summary { cursor: pointer; }
+  pre { white-space: pre-wrap; font: inherit; color: var(--text); margin: 8px 0 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -68,7 +68,7 @@
   </header>
 
   <div class="banner" id="keyBanner" hidden>
-    No API key found. Copy <code>.env.example</code> to <code>.env</code>, paste your ElevenLabs key, and restart the server.
+    The music engine isn't running yet. Start ACE-Step on this computer (steps are in the README), then reload this page.
   </div>
 
   <section>
@@ -93,22 +93,17 @@
         <input type="text" id="title" maxlength="80" placeholder="Untitled">
       </div>
     </div>
+    <div id="lyricsBox" style="margin-top:16px">
+      <label for="lyrics">Lyrics (optional). Leave blank and the AI writes them from your description.</label>
+      <textarea id="lyrics" rows="7" placeholder="[Verse 1]&#10;Woke up today with the sun on my face&#10;&#10;[Chorus]&#10;Make it count, make it yours"></textarea>
+    </div>
     <div class="actions">
       <button class="btn primary" id="quickBtn">Generate song</button>
-      <button class="btn" id="planBtn">Write lyrics first</button>
     </div>
-    <p class="hint">"Write lyrics first" is free and lets you edit the words and structure before spending credits on audio.</p>
+    <p class="hint">Free and unlimited: songs are made on this computer. How long one takes depends on your graphics card.</p>
     <div id="status" role="status"></div>
   </section>
 
-  <section id="planSection" hidden>
-    <h2>2. Edit lyrics and structure</h2>
-    <div id="chunks"></div>
-    <div class="actions">
-      <button class="btn primary" id="renderBtn">Generate from these lyrics</button>
-      <button class="btn" id="discardBtn">Discard</button>
-    </div>
-  </section>
 
   <section>
     <h2>Your songs</h2>
@@ -126,7 +121,6 @@ const IDEAS = [
   'UK drill, 142 BPM, sliding 808s, eerie strings, aggressive delivery',
 ];
 let instrumental = false;
-let plan = null;
 
 function fmt(sec) { return Math.floor(sec / 60) + ':' + String(Math.round(sec % 60)).padStart(2, '0'); }
 function setStatus(msg, kind) { const s = $('status'); s.textContent = msg || ''; s.className = kind || ''; }
@@ -154,11 +148,12 @@ for (const b of $('vocalToggle').children) {
   b.onclick = () => {
     instrumental = b.dataset.v === '1';
     for (const o of $('vocalToggle').children) o.setAttribute('aria-pressed', String(o === b));
+    $('lyricsBox').hidden = instrumental;
   };
 }
 
 function form() {
-  return { prompt: $('prompt').value.trim(), lengthSec: Number($('length').value), instrumental, title: $('title').value.trim() };
+  return { prompt: $('prompt').value.trim(), lengthSec: Number($('length').value), instrumental, title: $('title').value.trim(), lyrics: $('lyrics').value.trim() };
 }
 
 async function run(label, fn) {
@@ -169,58 +164,25 @@ async function run(label, fn) {
 }
 
 async function compose(body) {
-  const { song } = await api('/api/compose', { body });
+  const { jobId } = await api('/api/compose', { body });
+  const started = Date.now();
+  for (;;) {
+    await new Promise((r) => setTimeout(r, 2500));
+    const job = await api('/api/jobs/' + jobId);
+    if (job.status === 'failed') throw new Error(job.error);
+    if (job.status === 'done') break;
+    setStatus('Making your song... ' + fmt((Date.now() - started) / 1000), 'busy');
+  }
   await loadSongs();
   const first = document.querySelector('.song audio');
   if (first) first.play().catch(() => {});
-  return song;
 }
 
 $('quickBtn').onclick = () => {
   const f = form();
   if (!f.prompt) return setStatus('Describe the song first.', 'error');
-  run('Making your song. This usually takes a minute or two...', () => compose(f));
+  run('Making your song...', () => compose(f));
 };
-
-$('planBtn').onclick = () => {
-  const f = form();
-  if (!f.prompt) return setStatus('Describe the song first.', 'error');
-  run('Writing lyrics and structure...', async () => {
-    plan = (await api('/api/plan', { body: f })).plan;
-    renderPlan();
-    $('planSection').scrollIntoView({ behavior: 'smooth' });
-  });
-};
-
-// --- Plan editor ---
-function renderPlan() {
-  const box = $('chunks');
-  box.replaceChildren();
-  const chunks = (plan && plan.chunks) || [];
-  $('planSection').hidden = !chunks.length;
-  chunks.forEach((c, i) => {
-    if (typeof c.text !== 'string') return; // audio reference chunks are passed through untouched
-    const text = el('textarea', { rows: Math.min(12, c.text.split('\n').length + 1), value: c.text });
-    text.oninput = () => { c.text = text.value; };
-    const styles = el('input', { type: 'text', value: (c.positive_styles || []).join(', ') });
-    styles.oninput = () => { c.positive_styles = styles.value.split(',').map((s) => s.trim()).filter(Boolean); };
-    const dur = el('input', { type: 'number', min: 3, max: 120, value: Math.round(c.duration_ms / 1000) });
-    dur.oninput = () => { c.duration_ms = Math.min(120, Math.max(3, Number(dur.value) || 3)) * 1000; };
-    box.append(el('div', { className: 'chunk' },
-      el('label', { textContent: 'Part ' + (i + 1) + ': section name in [brackets], then lyrics' }), text,
-      el('div', { className: 'row' },
-        el('div', { style: 'flex: 3 1 260px' }, el('label', { textContent: 'Sound and style' }), styles),
-        el('div', { style: 'flex: 1 1 90px' }, el('label', { textContent: 'Seconds' }), dur))));
-  });
-}
-
-$('renderBtn').onclick = () => {
-  const f = form();
-  run('Making your song. This usually takes a minute or two...', async () => {
-    await compose({ ...f, plan });
-  });
-};
-$('discardBtn').onclick = () => { plan = null; renderPlan(); };
 
 // --- Library ---
 async function loadSongs() {
@@ -230,7 +192,7 @@ async function loadSongs() {
   box.replaceChildren(...songs.map((s) => {
     const reuse = el('button', { className: 'btn small', textContent: 'Reuse prompt', onclick: () => {
       $('prompt').value = s.prompt; $('title').value = s.title;
-      if (s.plan) { plan = structuredClone(s.plan); renderPlan(); }
+      $('lyrics').value = s.lyrics || '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } });
     const del = el('button', { className: 'btn small', textContent: 'Delete', onclick: async () => {
@@ -243,13 +205,14 @@ async function loadSongs() {
         el('div', { className: 'song-title', textContent: s.title }),
         el('div', { className: 'song-meta', textContent: new Date(s.createdAt).toLocaleString() + (s.instrumental ? ' · instrumental' : '') })),
       el('audio', { controls: true, preload: 'metadata', src: s.file }),
+      ...(s.lyrics ? [el('details', {}, el('summary', { textContent: 'Lyrics' }), el('pre', { textContent: s.lyrics }))] : []),
       el('div', { className: 'song-actions' },
         el('a', { className: 'btn small', href: s.file, download: s.title.replace(/[^\w\- ]+/g, '') + '.mp3', textContent: 'Download MP3' }),
         reuse, del));
   }));
 }
 
-api('/api/status').then((s) => { $('keyBanner').hidden = s.keyConfigured; }).catch(() => {});
+api('/api/status').then((s) => { $('keyBanner').hidden = s.engineOnline; }).catch(() => {});
 loadSongs().catch((e) => setStatus(e.message, 'error'));
 </script>
 </body>
