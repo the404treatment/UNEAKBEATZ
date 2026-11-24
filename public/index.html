@@ -93,6 +93,16 @@
         <input type="text" id="title" maxlength="80" placeholder="Untitled">
       </div>
     </div>
+    <div class="row">
+      <div>
+        <label for="bpm">Tempo in BPM (optional)</label>
+        <input type="number" id="bpm" min="30" max="300" placeholder="e.g. 123">
+      </div>
+      <div>
+        <label for="key">Key (optional)</label>
+        <input type="text" id="key" maxlength="20" placeholder="e.g. A minor">
+      </div>
+    </div>
     <div id="lyricsBox" style="margin-top:16px">
       <label for="lyrics">Lyrics (optional). Leave blank and the AI writes them from your description.</label>
       <textarea id="lyrics" rows="7" placeholder="[Verse 1]&#10;Woke up today with the sun on my face&#10;&#10;[Chorus]&#10;Make it count, make it yours"></textarea>
@@ -153,7 +163,7 @@ for (const b of $('vocalToggle').children) {
 }
 
 function form() {
-  return { prompt: $('prompt').value.trim(), lengthSec: Number($('length').value), instrumental, title: $('title').value.trim(), lyrics: $('lyrics').value.trim() };
+  return { prompt: $('prompt').value.trim(), lengthSec: Number($('length').value), instrumental, title: $('title').value.trim(), lyrics: $('lyrics').value.trim(), bpm: $('bpm').value, key: $('key').value.trim() };
 }
 
 async function run(label, fn) {

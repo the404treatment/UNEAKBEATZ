@@ -89,6 +89,10 @@ async function runJob(job, input) {
     thinking: true,
     vocal_language: /^[a-z]{2}$/.test(input.language || '') ? input.language : 'en',
   };
+  const bpm = Math.round(Number(input.bpm));
+  if (bpm >= 30 && bpm <= 300) body.bpm = bpm;
+  const key = String(input.key || '').trim().slice(0, 20);
+  if (key) body.key_scale = key;
   if (lyrics) Object.assign(body, { prompt, lyrics });
   else Object.assign(body, { sample_query: prompt }); // the engine's language model writes the lyrics
 
