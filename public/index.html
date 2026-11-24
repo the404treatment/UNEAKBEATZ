@@ -171,7 +171,8 @@ async function compose(body) {
     const job = await api('/api/jobs/' + jobId);
     if (job.status === 'failed') throw new Error(job.error);
     if (job.status === 'done') break;
-    setStatus('Making your song... ' + fmt((Date.now() - started) / 1000), 'busy');
+    const pct = job.progress > 0 ? ' · ' + Math.round(job.progress * 100) + '%' : '';
+    setStatus('Making your song... ' + fmt((Date.now() - started) / 1000) + pct, 'busy');
   }
   await loadSongs();
   const first = document.querySelector('.song audio');

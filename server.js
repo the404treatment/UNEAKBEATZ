@@ -70,6 +70,11 @@ async function engineOnline() {
   try { await engine('/health'); return true; } catch { return false; }
 }
 
+// Low-memory machines run the engine without its language model (the part that writes lyrics).
+async function lyricWriterMissing() {
+  try { const h = await engine('/health'); return h.models_initialized === true && h.llm_initialized === false; } catch { return false; }
+}
+
 // --- Jobs: a song can take minutes, so the browser polls instead of waiting on one request ---
 const jobs = new Map();
 
@@ -87,21 +92,13 @@ async function runJob(job, input) {
   if (lyrics) Object.assign(body, { prompt, lyrics });
   else Object.assign(body, { sample_query: prompt }); // the engine's language model writes the lyrics
 
-  const { task_id } = await engine('/release_task', body);
-  if (!task_id) throw fail(502, 'Music engine did not accept the song request.');
-
-  for (;;) {
-    await sleep(3000);
-    const [task] = (await engine('/query_result', { task_id_list: [task_id] })) || [];
-    if (!task || task.status === 0) continue;
-    let items = task.result; // arrives as a JSON string
-    try { if (typeof items === 'string') items = JSON.parse(items); } catch { items = []; }
-    const item = (Array.isArray(items) ? items : []).find((i) => i && i.file);
-    if (task.status !== 1 || !item) {
-      const why = (Array.isArray(items) && items[0] && (items[0].error || items[0].generation_info)) || '';
-      throw fail(502, `The music engine could not make this song. ${String(why).slice(0, 300)}`.trim());
-    }
-
+  let item = await generate(job, body);
+  if (!item && await lyricWriterMissing()) {
+    if (!lyrics) throw fail(502, 'The music engine on this computer is running without its lyric writer (not enough memory). Type your own lyrics and try again.');
+    item = await generate(job, { ...body, thinking: false });
+  }
+  if (!item) throw fail(502, 'The music engine could not make this song. Check the ACE-Step window for the reason.');
+  {
     const audio = await fetch(new URL(item.file, ENGINE), { headers: ENGINE_KEY ? { Authorization: `Bearer ${ENGINE_KEY}` } : {} });
     if (!audio.ok) throw fail(502, `Could not download the finished song (${audio.status}).`);
     const id = crypto.randomBytes(6).toString('hex');
@@ -119,6 +116,30 @@ async function runJob(job, input) {
     fs.writeFileSync(path.join(SONGS, `${id}.mp3`), Buffer.from(await audio.arrayBuffer()));
     fs.writeFileSync(path.join(SONGS, `${id}.json`), JSON.stringify(song, null, 2));
     return song;
+  }
+}
+
+// Submits one request to the engine and waits. Returns the finished item, or null if the engine reported failure.
+async function generate(job, body) {
+  const { task_id } = await engine('/release_task', body);
+  if (!task_id) throw fail(502, 'Music engine did not accept the song request.');
+  for (;;) {
+    await sleep(3000);
+    let task;
+    try { [task] = (await engine('/query_result', { task_id_list: [task_id] })) || []; }
+    catch (err) {
+      if (err.status === 503) throw fail(503, 'The music engine stopped while making the song. It may have run out of memory; restart ACE-Step and try a shorter song.');
+      throw err;
+    }
+    if (!task) continue;
+    let items = task.result; // arrives as a JSON string
+    try { if (typeof items === 'string') items = JSON.parse(items); } catch { items = []; }
+    if (!Array.isArray(items)) items = [];
+    if (task.status === 0) {
+      if (items[0] && typeof items[0].progress === 'number') job.progress = items[0].progress;
+      continue;
+    }
+    return (task.status === 1 && items.find((i) => i && i.file)) || null;
   }
 }
 
