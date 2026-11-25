@@ -1,6 +1,10 @@
 # Saved songs
 
-Songs generated with the studio, with the lyrics and style used for each.
+Songs generated with the studio, sorted by genre, with the lyrics and style used for each.
+
+- `melodic-house/` — The Good Part, Paint It Golden (the "Make It Spectacular" style)
+- `rock-metal/` — Paper Masks, Burn the Mask (shelved for now)
+- `pop/` — Right Here, Right Now and the first test song
 
 ## The Good Part
 
