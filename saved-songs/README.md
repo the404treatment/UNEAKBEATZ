@@ -125,3 +125,63 @@ Take this plain old day and paint it golden now
 La la la, paint it golden
 La la la, golden now
 ```
+
+## Paper Masks
+
+**Style:** Alternative metal, nu metal, 128 BPM, G minor, delicate fingerpicked acoustic guitar intro with soft strings that erupts into a heavy down-tuned distorted guitar riff, tight aggressive live drums with fast double kick and crashing cymbals, driving distorted bass, extreme quiet-loud dynamics, frantic rapid-fire staccato shouted verses, sudden stops, huge soaring melodic chorus with harmonized dual male vocals, theatrical manic male lead vocalist switching from fast spoken-shout to powerful operatic tenor, Eastern European folk-tinged melodies, soft piano and strings bridge swelling into an emotional epic climax, raw, intense, dramatic, powerful modern rock production
+
+**Tempo/key:** 128 BPM, G minor
+
+```
+[Intro - soft acoustic guitar, strings]
+
+[Verse 1 - fast, staccato, shouted]
+Wake up! Paint a smile on, tie the tie on
+Clock in, check the screen, put the mask on
+Hide the cracks, fake the laugh, play the part now
+Nobody sees what's underneath, so carry on, carry on
+
+[Pre-Chorus - half whispered]
+You say you're fine, you say you're fine
+You've said it so long it's a lullaby
+
+[Chorus - soaring, melodic, harmonies]
+I've been wearing paper masks in the pouring rain
+Watching every face I made just wash away
+Tell me who I am when the colours run
+I don't recognise the one that I've become
+
+[Verse 2 - fast, staccato, shouted]
+Scroll down! Like the lie now, buy the lie now
+Sell yourself by the hour, keep it quiet
+Count the likes, count the days, count the cost now
+Everybody's screaming in a silent room, so carry on, carry on
+
+[Pre-Chorus - half whispered]
+You say you're fine, you say you're fine
+You've said it so long it's a lullaby
+
+[Chorus - soaring, melodic, harmonies]
+I've been wearing paper masks in the pouring rain
+Watching every face I made just wash away
+Tell me who I am when the colours run
+I don't recognise the one that I've become
+
+[Bridge - soft piano and strings, building, operatic]
+Mother, did you see me falling
+Did you hear me when I called your name
+I was only ever hiding
+I was only ever so afraid
+
+[Build - rising, drum roll]
+
+[Final Chorus - explosive, powerful belting]
+Let the paper masks dissolve in the pouring rain
+Let every face I made just wash away
+Now I know who I am when the colours run
+I'm not afraid of the one that I've become
+
+[Outro - soft, acoustic guitar fading]
+When the colours run
+I'm not afraid
+```
