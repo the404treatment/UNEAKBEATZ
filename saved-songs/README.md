@@ -315,3 +315,69 @@ Still loading
 Still loading
 P! C! T! E!
 ```
+
+## Persistent Pain (PCTE) - angry metal (explicit)
+
+**Style:** Angry groove metal, metalcore, 120 BPM, D minor, brutal drop-tuned chugging guitar riffs, pounding double kick drums, crushing bass, furious aggressive male vocals, harsh shouted verses, screamed chorus with gang shouts, deep growls in the breakdown, slow crushing half-time breakdown, dark, hostile, raging, explicit, heavy modern metal production, loud wide mix
+
+**Tempo/key:** 120 BPM, D minor
+
+```
+[Intro]
+P! C! T! E!
+Fuck this thing!
+
+[Verse 1]
+Eight a.m. and the login's dead
+Spinning wheel is fucking with my head
+Range deploying for half the day
+Session timed out, threw my work away
+
+[Pre-Chorus]
+Click, wait, click, wait
+I am losing my shit
+
+[Chorus]
+P C T E, you piece of shit
+Persistent pain, I'm sick of it
+Nothing loads and nothing works
+Fuck this range, it only hurts
+
+[Verse 2]
+Console froze, the mouse is gone
+One damn command took all night long
+Virtual machine, it will not boot
+Ticket's closed with a bullshit salute
+
+[Pre-Chorus]
+Click, wait, click, wait
+I am losing my shit
+
+[Chorus]
+P C T E, you piece of shit
+Persistent pain, I'm sick of it
+Nothing loads and nothing works
+Fuck this range, it only hurts
+
+[Breakdown]
+Still loading!
+Still fucking loading!
+Ninety two percent!
+Burn it down!
+
+[Bridge]
+Train like you fight, that's what they said
+I fought the login till I was dead
+The enemy was never the red team
+It's this goddamn loading screen
+
+[Chorus]
+P C T E, you piece of shit
+Persistent pain, I'm sick of it
+Nothing loads and nothing works
+Fuck this range, it only hurts
+
+[Outro]
+Still loading
+Fuck!
+```
