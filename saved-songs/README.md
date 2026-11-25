@@ -4,6 +4,7 @@ Songs generated with the studio, sorted by genre, with the lyrics and style used
 
 - `melodic-house/` — The Good Part, Paint It Golden (the "Make It Spectacular" style)
 - `rock-metal/` — Paper Masks, Burn the Mask (shelved for now)
+- `pop-punk/` — Persistent Pain (PCTE)
 - `pop/` — Right Here, Right Now and the first test song
 
 ## The Good Part
@@ -253,4 +254,64 @@ Burn the mask, I am not afraid
 
 [Outro]
 I am not afraid
+```
+
+## Persistent Pain (PCTE)
+
+**Style:** Pop punk, comedic rock anthem, 165 BPM, E major, bright crunchy power chord guitars, fast driving drums, bouncy bass, palm-muted verses, huge singalong shout chorus with gang vocals, sarcastic bratty male lead vocals, clear diction, funny and fed up, catchy hook, tight energetic polished production
+
+**Tempo/key:** 165 BPM, E major
+
+```
+[Intro]
+P! C! T! E!
+
+[Verse 1]
+Logged in at eight with my coffee in hand
+Spinning wheel says it has other plans
+Range is deploying, it's been half a day
+My session timed out while I looked away
+
+[Pre-Chorus]
+Click, wait, click, wait
+Refresh the page and pray
+
+[Chorus]
+P C T E, what did I do to you
+Persistent pain is all you put me through
+The only thing persistent is the lag
+P C T E, you're such a drag
+
+[Verse 2]
+Console's frozen and the mouse won't move
+Typed one command and it showed up at noon
+Virtual machine that will never boot
+Opened a ticket, got an auto salute
+
+[Pre-Chorus]
+Click, wait, click, wait
+Refresh the page and pray
+
+[Chorus]
+P C T E, what did I do to you
+Persistent pain is all you put me through
+The only thing persistent is the lag
+P C T E, you're such a drag
+
+[Bridge]
+They said train like you fight
+I've been fighting the login all night
+My adversary isn't red team's crew
+It's a loading bar stuck at ninety two
+
+[Chorus]
+P C T E, what did I do to you
+Persistent pain is all you put me through
+The only thing persistent is the lag
+P C T E, you're such a drag
+
+[Outro]
+Still loading
+Still loading
+P! C! T! E!
 ```
