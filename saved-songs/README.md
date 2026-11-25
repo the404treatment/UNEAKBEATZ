@@ -185,3 +185,68 @@ I'm not afraid of the one that I've become
 When the colours run
 I'm not afraid
 ```
+
+## Burn the Mask
+
+Made with the engine's melody-planning model switched on.
+
+**Style:** Alternative metal, hard rock, 108 BPM, D minor, distinctive syncopated stop-start drop-tuned guitar riff, tribal tom-driven drum groove in the verses, thick wall of palm-muted chugging guitars and growling bass in the chorus, powerful punchy studio drums, haunting Middle Eastern scale lead guitar hook that answers the vocal, dark string orchestra and choir stabs, raw gritty powerful male rock lead vocals with rasp, intense and urgent, huge belted anthemic chorus with gang vocals shouting the hook, screamed ad-libs at the peaks, tense quiet verses exploding into a massive chorus, breakdown with half-time heavy riff, angry, defiant, cathartic, polished major-label rock production, wide heavy mix
+
+**Tempo/key:** 108 BPM, D minor
+
+```
+[Intro]
+
+[Verse 1]
+Nine to five with a knife in my back
+Say I'm good, and I swallow that
+Boss wants blood and the rent wants more
+I've been dying on a polished floor
+
+[Pre-Chorus]
+Smile, they said, smile
+Till your teeth crack
+
+[Chorus]
+So burn the mask, let them see my face
+I'm done bleeding quiet in my place
+You want a saint, I am not your saint
+Burn the mask, I am not afraid
+
+[Verse 2]
+Feed's on fire, everybody's fine
+Filtered lives in a perfect line
+I've got scars that don't make the post
+I'm the house and I'm the ghost
+
+[Pre-Chorus]
+Smile, they said, smile
+Till your teeth crack
+
+[Chorus]
+So burn the mask, let them see my face
+I'm done bleeding quiet in my place
+You want a saint, I am not your saint
+Burn the mask, I am not afraid
+
+[Guitar Solo]
+
+[Bridge]
+Mother, I was never fine
+I learned to lie at five years old
+Every yes was a little death
+Now hear me, hear me, I said no
+
+[Breakdown]
+Burn it! Burn it down!
+Burn it! Burn it down!
+
+[Chorus]
+So burn the mask, let them see my face
+I'm done bleeding quiet in my place
+You want a saint, I am not your saint
+Burn the mask, I am not afraid
+
+[Outro]
+I am not afraid
+```
